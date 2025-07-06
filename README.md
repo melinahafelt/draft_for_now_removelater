@@ -1,17 +1,30 @@
-### Dataset Notes – PD vs LGD
+## LGD Dataset: Event-Based Simulation
 
-The LGD dataset used in this project is based on the **same underlying synthetic dataset** as the PD modeling section. No structural changes were made to the original columns. Instead, the following LGD-specific fields were added to support loss estimation:
+The file `lgd_event_dataset.csv` extends the synthetic PD dataset into an **event-based structure** designed for more realistic LGD modeling.
 
-- `recovered_amount` – the amount recovered after default  
-- `recovery_rate` – proportion of exposure recovered  
-- `lgd` – calculated as `1 − recovery_rate`
+Each customer appears multiple times, representing their journey through different credit lifecycle events:
 
-To simulate realistic data challenges and enable demonstration of validation logic, the LGD dataset includes **intentional data quality issues**, such as:
+- `event_type = "default"` – the year the customer enters default  
+- `event_type = "recovery"` – the year recovery occurs after default  
 
-- Duplicate default records for the same customer-year  
-- Missing values in recovery fields  
-- Recovery amounts exceeding exposure (leading to LGD < 0)
+This mirrors how LGD behaves in real-world portfolios where recovery data is typically reported in a **later period** than the default event.
 
-These modifications are included to reflect real-world issues commonly encountered in LGD data, and to illustrate how to detect and address them in a credit risk modeling pipeline.
+### Added Columns
 
-> The PD notebook remains unchanged and does not rely on these LGD-specific columns.
+| Column               | Description                                           |
+|----------------------|-------------------------------------------------------|
+| `event_type`         | `"default"` or `"recovery"` per customer and year     |
+| `recovered_amount`   | Amount recovered after default                        |
+| `recovery_rate`      | Share of exposure recovered = `recovered_amount / exposure_at_default` |
+| `lgd`                | Loss Given Default = `1 − recovery_rate`              |
+
+### Data Quality Features
+
+This dataset includes realistic validation scenarios:
+- Duplicate recovery entries for a customer
+- One case where `recovered_amount > exposure` → `LGD < 0`
+- One row with missing recovery data
+
+These intentional issues are included to showcase proper LGD data validation logic and to allow downstream cleansing, aggregation, or rule-based handling.
+
+> This file is separate from the original PD dataset and was created purely for LGD modeling demonstration.
