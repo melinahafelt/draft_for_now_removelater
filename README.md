@@ -2,8 +2,8 @@
 
 This repository contains synthetic datasets and notebooks designed to simulate key concepts in IRB credit risk modeling, with a focus on:
 
-- PD (Probability of Default)
-- LGD (Loss Given Default)
+- PD (Probability of Default)  
+- LGD (Loss Given Default)  
 
 Both are central components in regulatory and internal risk quantification frameworks.
 
