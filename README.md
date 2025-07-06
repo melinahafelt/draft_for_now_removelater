@@ -1,31 +1,73 @@
-# LGD Dataset: Event-Based Simulation
-The file `lgd_event_dataset.csv` extends the synthetic PD dataset into an event-based structure designed to better reflect real-world LGD modeling.
-Unlike PD, where each customer typically has one row per snapshot period, the LGD dataset allows multiple rows per customer, capturing the timeline of credit events:
-- `event_type = "default"` – the year the customer defaults  
-- `event_type = "recovery"` – the year when recovery occurs after default
-This structure mirrors how LGD behaves in actual credit portfolios, where recovery data is often reported in a later period than the default event.
+# IRB Credit Risk Modeling – Synthetic PD & LGD Datasets
+
+This repository contains synthetic datasets and notebooks designed to simulate key concepts in IRB credit risk modeling, with a focus on:
+
+- PD (Probability of Default)
+- LGD (Loss Given Default)
+
+Both are central components in regulatory and internal risk quantification frameworks.
+
+## 1. PD Modeling
+
+The PD dataset (`pd_synthetic_dataset.csv`) is snapshot-based, with one row per customer per year.  
+It is structured to support standard IRB-level PD model development and validation:
+
+- Feature engineering on customer-level attributes  
+- Default flag creation  
+- Statistical validation: monotonicity, binning, KS tests, and more  
+
+See: `IRB_PD.ipynb`
+
+## 2. LGD Dataset: Event-Based Simulation
+
+The LGD dataset (`lgd_event_dataset.csv`) extends the PD concept with a more complex, event-based structure to reflect how LGD is modeled in production systems.
+
+Each customer may have multiple rows, representing key credit lifecycle events:
+
+- `event_type = "default"` – the year default occurs  
+- `event_type = "recovery"` – the year recovery is recorded  
+
+This design reflects real-world LGD behavior, where recovery may occur one or more years after the initial default.
 
 ## Added Columns
+
 | Column             | Description                                                                 |
 |--------------------|-----------------------------------------------------------------------------|
 | `event_type`        | "default" or "recovery" per customer and year                              |
 | `recovered_amount`  | Amount recovered after default                                              |
 | `recovery_rate`     | Share of exposure recovered = `recovered_amount / exposure_at_default`     |
 | `lgd`               | Loss Given Default = `1 − recovery_rate`                                   |
-| `batch_run_date`    | Date when the data batch was generated or updated                          |
+| `batch_run_date`    | Timestamp of batch generation; used to filter out outdated duplicate rows  |
 
 ## Data Complexity and Preprocessing
-Compared to the PD dataset, the LGD dataset is intentionally more complex. It introduces features commonly found in real-world LGD data pipelines that require additional preprocessing:
-- Multiple rows per customer (for each event or batch)
-- Duplicate recovery entries for the same customer
-- One row where `recovered_amount > exposure_at_default`, resulting in `lgd < 0`
-- One row with missing recovery data
-- Varying `batch_run_date` values across duplicate rows
-To address these issues, the data is sorted by `batch_run_date`, and only the latest available record per customer is retained. This simulates real-world conditions where recovery data can be delayed or corrected over time — a common challenge in LGD data preparation.
 
-## LGD vs. PD Modeling
-- LGD modeling typically involves fewer statistical validation steps  
-- Greater emphasis is placed on data integrity and lifecycle consistency  
-- LGD data tends to be event-driven, while PD data is typically snapshot-based
+This LGD dataset includes realistic data issues commonly encountered in IRB modeling:
 
-**Note:** This file is separate from the original PD dataset and was created solely for LGD modeling demonstration purposes.
+- Duplicate recovery entries for a customer  
+- Rows where `recovered_amount > exposure_at_default`, resulting in `lgd < 0`  
+- One row with missing recovery data  
+- Varying `batch_run_date` values across duplicate rows  
+
+To simulate these conditions, the data must be sorted by `batch_run_date` and filtered to retain only the most recent entry per customer.  
+This mimics real-world LGD pipelines, where data often arrives in batches and may be revised over time.
+
+## LGD vs. PD – Modeling Focus
+
+| Aspect               | PD Modeling                             | LGD Modeling                                         |
+|----------------------|------------------------------------------|------------------------------------------------------|
+| Structure            | Snapshot-based (one row per year)        | Event-based (multiple rows per customer)             |
+| Validation focus     | Statistical tests (KS, PSI, etc.)        | Data integrity and lifecycle handling                |
+| Common challenges    | Imbalanced data                          | Delayed recoveries, duplicates, missing values       |
+| Regulatory alignment | Basel-compliant scoring                  | Lifecycle LGD estimation and downturn adjustments    |
+
+## Purpose of this Project
+
+This repository demonstrates not only the technical implementation of IRB-aligned modeling logic, but also:
+
+- How PD and LGD differ structurally  
+- Why LGD often requires stricter data hygiene  
+- The role of fields like `batch_run_date` in production data pipelines  
+- How synthetic data can be designed to simulate real-world risk analytics workflows  
+
+This is a sandbox project created for demonstration and job discussion purposes only.  
+No real customer data is used. All datasets are fully synthetic.
