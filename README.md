@@ -1,30 +1,33 @@
-## LGD Dataset: Event-Based Simulation
+# LGD Dataset: Event-Based Simulation
+The file `lgd_event_dataset.csv` extends the synthetic PD dataset into an event-based structure designed to better reflect real-world LGD modeling.
 
-The file `lgd_event_dataset.csv` extends the synthetic PD dataset into an **event-based structure** designed for more realistic LGD modeling.
+Unlike PD, where each customer typically has one row per snapshot period, the LGD dataset allows multiple rows per customer, capturing the timeline of credit events:
 
-Each customer appears multiple times, representing their journey through different credit lifecycle events:
+- `event_type = "default"` – the year the customer defaults  
+- `event_type = "recovery"` – the year when recovery occurs after default
 
-- `event_type = "default"` – the year the customer enters default  
-- `event_type = "recovery"` – the year recovery occurs after default  
+This structure mirrors how LGD behaves in actual credit portfolios, where recovery data is often reported in a later period than the default event.
 
-This mirrors how LGD behaves in real-world portfolios where recovery data is typically reported in a **later period** than the default event.
+## Added Columns
+| Column             | Description                                                                 |
+|--------------------|-----------------------------------------------------------------------------|
+| `event_type`        | "default" or "recovery" per customer and year                              |
+| `recovered_amount`  | Amount recovered after default                                              |
+| `recovery_rate`     | Share of exposure recovered = `recovered_amount / exposure_at_default`     |
+| `lgd`               | Loss Given Default = `1 − recovery_rate`                                   |
 
-### Added Columns
+## Data Complexity and Preprocessing
+Compared to the PD dataset, the LGD dataset is intentionally more complex. It introduces features commonly found in real-world LGD data pipelines that require additional preprocessing:
 
-| Column               | Description                                           |
-|----------------------|-------------------------------------------------------|
-| `event_type`         | `"default"` or `"recovery"` per customer and year     |
-| `recovered_amount`   | Amount recovered after default                        |
-| `recovery_rate`      | Share of exposure recovered = `recovered_amount / exposure_at_default` |
-| `lgd`                | Loss Given Default = `1 − recovery_rate`              |
-
-### Data Quality Features
-
-This dataset includes realistic validation scenarios:
-- Duplicate recovery entries for a customer
-- One case where `recovered_amount > exposure` → `LGD < 0`
+- Multiple rows per customer (e.g., for each event or batch)
+- Duplicate recovery entries for the same customer
+- One row where `recovered_amount > exposure_at_default`, resulting in `lgd < 0`
 - One row with missing recovery data
 
-These intentional issues are included to showcase proper LGD data validation logic and to allow downstream cleansing, aggregation, or rule-based handling.
+To address these issues, the data is sorted by `batch_run_date`, and only the latest available record per customer is retained. This simulates real-world conditions where recovery data can be delayed or corrected over time.
 
-> This file is separate from the original PD dataset and was created purely for LGD modeling demonstration.
+## LGD vs. PD Modeling
+- LGD modeling typically involves fewer statistical validation steps  
+- Greater emphasis is placed on data integrity and lifecycle consistency
+
+> **Note:** This file is separate from the original PD dataset and was created solely for demonstration purposes related to LGD modeling.
